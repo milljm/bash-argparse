@@ -1,62 +1,58 @@
 #!/bin/bash
-# This does not yet work on Unix... Need to figure out correct local and declare options.
-function justify_array()
-{
-    # This function uses indirect expansion (pass variable name, not the value)
-    variable_name=$1; variable_array="${variable_name}[@]"
-
-    # Will be used globally so we do not need to run additional loops
-    declare -g longest_found=""
-    declare -g indent="`printf "%.s " {1..100}`"
-
-    # find longest string
-    for message in "${!variable_array}"; do
-        if [ ${#message} -gt ${#longest_found} ]; then longest_found="${message}   "; fi
-    done
-
-    # adjust all strings to match length plus the indent. We will use substitution for speed (no forking)
-    index=0
-    for message in "${!variable_array}"; do
-        declare -g ${variable_name}[$index]="${message}${indent::${#longest_found}-${#message}}"
-        let index=$index+1
-    done
-}
-
 function print_arrays()
 {
-    # Maximum character length in the about section before a new line occurs
-    max_length=50
-    tab="      "
-
     # This function uses indirect expansion (pass variable name, not the value)
-    local -n _args_array=$1
-    local -n _msgs_array=$2
-    justify_array ${!_args_array}
+    local _args_array=$1
+    local _msgs_array=$2
+    local tmp=$_args_array[@]
+    local args_array=( "${!tmp}" )
+    local tmp=$_msgs_array[@]
+    local msgs_array=( "${!tmp}" )
+    local max_length=50
+    local tab="      "
+    local longest_found=""
+    local indent=$(printf "%.s " {1..100})
+
+    #justify_array ${!_args_array}
+
+    # Discover longest argument
+    for argument in ${args_array[@]}; do
+        if [ ${#argument} -gt ${#longest_found} ]; then
+            longest_found="${argument}${tab}"
+        fi
+    done
+
+    # Create indent for about strings based on longest found argument length
+    index=0
+    for argument in "${args_array[@]}"; do
+        args_array[$index]="${argument}${indent::${#longest_found}-${#argument}}"
+        let index=$index+1
+    done
 
     index=0
-    for message in "${_args_array[@]}"; do
+    for message in "${args_array[@]}"; do
         # About string longer than max_length
-        message_length=${#_msgs_array[$index]}
+        message_length=${#msgs_array[$index]}
         if [ $message_length -gt $max_length ]; then
 
             # Format the message string while longer than max_length
             justified_message=""
             while [ $message_length -gt $max_length ]; do
                 # each iteration will contain a new line, with indented spaces to beautify the about message
-                justified_message="${justified_message}${_msgs_array[$index]::$max_length}\n${tab}${indent::${#longest_found}}"
+                justified_message="${justified_message}${msgs_array[$index]::$max_length}\n${tab}${indent::${#longest_found}}"
 
                 # adjust remainder message length to escape while true
-                _msgs_array[$index]="${_msgs_array[$index]:$max_length}"
-                message_length=${#_msgs_array[$index]}
+                msgs_array[$index]="${msgs_array[$index]:$max_length}"
+                message_length=${#msgs_array[$index]}
             done
 
             # Grab any remainder
-            remainder_message="${_msgs_array[$index]}"
+            remainder_message="${msgs_array[$index]}"
 
             # Print formatted string
             echo -e "${tab}${message}${justified_message}${remainder_message}"
         else
-            echo -e "${tab}${message}${_msgs_array[$index]}"
+            echo -e "${tab}${message}${msgs_array[$index]}"
         fi
         let index=$index+1
     done
