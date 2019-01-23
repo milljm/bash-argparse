@@ -38,14 +38,29 @@ function print_arrays()
             # Format the message string while longer than max_length
             justified_message=""
             while [ $message_length -gt $max_length ]; do
+
+                # Split on word, not charcter
+                tmp_char_index=$max_length
+                unset advance_by_one
+                while [ "${msgs_array[$index]:$tmp_char_index:1}" != " " ]; do
+                    advance_by_one='true'
+                    let tmp_char_index=$tmp_char_index-1
+                    if [ $tmp_char_index -le 0 ]; then break; fi
+                done
+                let index_max_length=$tmp_char_index
+
                 # each iteration will contain a new line, with indented spaces to beautify the about message
-                justified_message="${justified_message}${msgs_array[$index]::$max_length}\n${tab}${indent::${#longest_found}}"
+                justified_message="${justified_message}${msgs_array[$index]::$index_max_length}\n${tab}${indent::${#longest_found}}"
 
-                # adjust remainder message length to escape while true
-                msgs_array[$index]="${msgs_array[$index]:$max_length}"
+                # move forward until we don't hit a space
+                while [ "${msgs_array[$index]:$index_max_length:1}" = " " ]; do
+                    if [ $index_max_length -ge ${#msgs_array[$index]} ]; then break; fi
+                    let index_max_length=$index_max_length+1
+                done
+                msgs_array[$index]="${msgs_array[$index]:$index_max_length}"
                 message_length=${#msgs_array[$index]}
-            done
 
+            done
             # Grab any remainder
             remainder_message="${msgs_array[$index]}"
 
@@ -65,13 +80,15 @@ function print_help()
           "-f|--foo"\
           "-b|--bar"\
           "-l|--long-named-option"\
-          "-s|--short")
+          "-s|--short"\
+          "--supper-duper-long")
 
     args_about=("Print this message and exit"\
                 "Help for foo"\
                 "Help for bar"\
                 "Very long help description which will be a multi-line event for that longed named option"\
-                "Help for -s, demonstrating a new line after a long line event")
+                "Help for -s, demonstrating a new line after a long line event"\
+                "Enable usage Sparing Table. Optionally specify also the number of  sparing  tables. Valid numbers are 1-4. When spartable-number is omitted then two tables are written to disc. If option is omitted then usage of Sparing Table depends  on  media  type.")
 
     printf "\nSyntax:\n\t./`basename $0`\n\nOptions:\n\n"
     print_arrays args args_about
