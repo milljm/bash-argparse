@@ -62,10 +62,10 @@ function print_arrays()
                 # Move backwards to detect a space separated word. If we hit the floor, move forwards instead
                 while [ "${_msgs_array[$index]:$tmp_char_index:1}" != " " ] && [ -z "$move_forwards_instead" ]; do
                     let tmp_char_index=$tmp_char_index-1
-                    # We hit the floor before finding a white-space, try moving forwards instead
+                    # We hit the floor
                     if [ $tmp_char_index -le 0 ]; then
                         move_forwards_instead=true
-                        tmp_char_index=$max_length
+                        let tmp_char_index=$max_length+1
                         while [ "${_msgs_array[$index]:$tmp_char_index:1}" != " " ]; do
                             # Catch end of string condition
                             if [ $tmp_char_index -ge ${#_msgs_array[$index]} ]; then break; fi
