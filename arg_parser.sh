@@ -1,73 +1,89 @@
 #!/bin/bash
 function print_arrays()
 {
-    # This function uses indirect expansion (pass variable name, not the value)
+    #### This function uses indirect expansion (pass variable name, not the value)
+    ##
+    ## Syntax:  print_arrays args args_about
+    ##
+    ## where args and args_about are double quoted string arrays:
+    ##   args=("-h|--help" "-a" "-b")
+    ##   args_about=("Pring this message and exit" "-a does this" "-b does that")
+    ##
+    ## The desired maximium about text length, before justification occurs
+    local max_length=50
+
+    ## The desired 'tab' length which separates the argument from argument discription
+    local tab="   "
+
+    #### End user customizations
     local _args_array=$1
     local _msgs_array=$2
-    local tmp=$_args_array[@]
-    local args_array=( "${!tmp}" )
-    local tmp=$_msgs_array[@]
-    local msgs_array=( "${!tmp}" )
-    local max_length=50
-    local tab="      "
-    local longest_found=""
-    local indent=$(printf "%.s " {1..100})
-
-    #justify_array ${!_args_array}
+    local _tmp=$_args_array[@]
+    local _args_array=( "${!_tmp}" )
+    local _tmp=$_msgs_array[@]
+    local _msgs_array=( "${!_tmp}" )
+    local _longest_found=""
+    local _indent=$(printf "%.s " {1..100})
 
     # Discover longest argument
-    for argument in ${args_array[@]}; do
-        if [ ${#argument} -gt ${#longest_found} ]; then
-            longest_found="${argument}${tab}"
+    for argument in ${_args_array[@]}; do
+        if [ ${#argument} -gt ${#_longest_found} ]; then
+            _longest_found="${argument}${tab}"
         fi
     done
 
     # Create indent for about strings based on longest found argument length
     index=0
-    for argument in "${args_array[@]}"; do
-        args_array[$index]="${argument}${indent::${#longest_found}-${#argument}}"
+    for argument in "${_args_array[@]}"; do
+        _args_array[$index]="${argument}${_indent::${#_longest_found}-${#argument}}"
         let index=$index+1
     done
 
     index=0
-    for message in "${args_array[@]}"; do
+    for message in "${_args_array[@]}"; do
+        message_length=${#_msgs_array[$index]}
+
         # About string longer than max_length
-        message_length=${#msgs_array[$index]}
         if [ $message_length -gt $max_length ]; then
-
-            # Format the message string while longer than max_length
             justified_message=""
-            while [ $message_length -gt $max_length ]; do
 
-                # Split on word, not charcter
+            # Format the message string while it is longer than max_length (this method continues to widdle down message_length)
+            while [ $message_length -gt $max_length ]; do
                 tmp_char_index=$max_length
                 unset advance_by_one
-                while [ "${msgs_array[$index]:$tmp_char_index:1}" != " " ]; do
+
+                # Move backwards and split on white-space, not a character
+                while [ "${_msgs_array[$index]:$tmp_char_index:1}" != " " ]; do
                     advance_by_one='true'
                     let tmp_char_index=$tmp_char_index-1
+                    # catch a zero lengthed string and exit loop
                     if [ $tmp_char_index -le 0 ]; then break; fi
                 done
                 let index_max_length=$tmp_char_index
 
-                # each iteration will contain a new line, with indented spaces to beautify the about message
-                justified_message="${justified_message}${msgs_array[$index]::$index_max_length}\n${tab}${indent::${#longest_found}}"
+                # Where the magic happens. Append the new line with the proper lengthed spaces to justify the about text
+                justified_message="${justified_message}${_msgs_array[$index]::$index_max_length}\n${tab}${_indent::${#_longest_found}}"
 
-                # move forward until we don't hit a space
-                while [ "${msgs_array[$index]:$index_max_length:1}" = " " ]; do
-                    if [ $index_max_length -ge ${#msgs_array[$index]} ]; then break; fi
+                # Move forwards until we don't hit a space
+                while [ "${_msgs_array[$index]:$index_max_length:1}" = " " ]; do
+                    # Catch end of string condition
+                    if [ $index_max_length -ge ${#_msgs_array[$index]} ]; then break; fi
                     let index_max_length=$index_max_length+1
                 done
-                msgs_array[$index]="${msgs_array[$index]:$index_max_length}"
-                message_length=${#msgs_array[$index]}
+
+                # Consume/advance our position within the message, so we eventually exit this while loop
+                _msgs_array[$index]="${_msgs_array[$index]:$index_max_length}"
+                message_length=${#_msgs_array[$index]}
 
             done
-            # Grab any remainder
-            remainder_message="${msgs_array[$index]}"
+            # Consume last part of message as we exit the while loop
+            remainder_message="${_msgs_array[$index]}"
 
-            # Print formatted string
-            echo -e "${tab}${message}${justified_message}${remainder_message}"
+            # Print beautified message string
+            echo -e "${tab}${message}${justified_message}${remainder_message}\n"
         else
-            echo -e "${tab}${message}${msgs_array[$index]}"
+            # Print as-is, no formatting was required
+            echo -e "${tab}${message}${_msgs_array[$index]}"
         fi
         let index=$index+1
     done
@@ -80,13 +96,17 @@ function print_help()
           "-f|--foo"\
           "-b|--bar"\
           "-l|--long-named-option"\
+          "-s|--short"\
+          "-r|--resume"\
           "-s|--short")
 
     args_about=("Print this message and exit"\
                 "Help for foo"\
                 "Help for bar"\
                 "Very long help description which will be a multi-line event for that longed named option"\
-                "Help for -s, demonstrating a new line after a long line event")
+                "Help for -s, demonstrating a new line after a long line event"\
+                "Short help description"\
+                "Short again")
 
     printf "\nSyntax:\n\t./`basename $0`\n\nOptions:\n\n"
     print_arrays args args_about
