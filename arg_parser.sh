@@ -80,15 +80,13 @@ function print_help()
           "-f|--foo"\
           "-b|--bar"\
           "-l|--long-named-option"\
-          "-s|--short"\
-          "--supper-duper-long")
+          "-s|--short")
 
     args_about=("Print this message and exit"\
                 "Help for foo"\
                 "Help for bar"\
                 "Very long help description which will be a multi-line event for that longed named option"\
-                "Help for -s, demonstrating a new line after a long line event"\
-                "Enable usage Sparing Table. Optionally specify also the number of  sparing  tables. Valid numbers are 1-4. When spartable-number is omitted then two tables are written to disc. If option is omitted then usage of Sparing Table depends  on  media  type.")
+                "Help for -s, demonstrating a new line after a long line event")
 
     printf "\nSyntax:\n\t./`basename $0`\n\nOptions:\n\n"
     print_arrays args args_about
