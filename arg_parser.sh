@@ -5,12 +5,21 @@ function print_arrays()
     ##
     ## Syntax:  print_arrays args args_about
     ##
-    ## where args and args_about are double quoted string arrays:
-    ##   args=("-h|--help" "-a" "-b")
-    ##   args_about=("Pring this message and exit" "-a does this" "-b does that")
+    ## Where args and args_about are arrays containing double quoted content:
     ##
+    ##   args=("-h|--help"\
+    ##         "-a|--absolute [INT]"\
+    ##         "-b|--bool-option")
+    ##
+    ##   args_about=("Pring this message and exit"\
+    ##               "-a does this"\
+    ##               "-b does that")
+    ##
+    ## Note: Line Continuations "\" are _required_ when building multi-argument help systems
+    ####
+
     ## The desired maximium about text length, before justification occurs
-    local max_length=50
+    local max_length=40
 
     ## The desired 'tab' length which separates the argument from argument discription
     local tab="   "
@@ -50,15 +59,21 @@ function print_arrays()
             # Format the message string while it is longer than max_length (this method continues to widdle down message_length)
             while [ $message_length -gt $max_length ]; do
                 tmp_char_index=$max_length
-                unset advance_by_one
-
-                # Move backwards and split on white-space, not a character
-                while [ "${_msgs_array[$index]:$tmp_char_index:1}" != " " ]; do
-                    advance_by_one='true'
+                # Move backwards to detect a space separated word. If we hit the floor, move forwards instead
+                while [ "${_msgs_array[$index]:$tmp_char_index:1}" != " " ] && [ -z "$move_forwards_instead" ]; do
                     let tmp_char_index=$tmp_char_index-1
-                    # catch a zero lengthed string and exit loop
-                    if [ $tmp_char_index -le 0 ]; then break; fi
+                    # We hit the floor before finding a white-space, try moving forwards instead
+                    if [ $tmp_char_index -le 0 ]; then
+                        move_forwards_instead=true
+                        tmp_char_index=$max_length
+                        while [ "${_msgs_array[$index]:$tmp_char_index:1}" != " " ]; do
+                            # Catch end of string condition
+                            if [ $tmp_char_index -ge ${#_msgs_array[$index]} ]; then break; fi
+                            let tmp_char_index=$tmp_char_index+1
+                        done
+                    fi
                 done
+                unset move_forwards_instead
                 let index_max_length=$tmp_char_index
 
                 # Where the magic happens. Append the new line with the proper lengthed spaces to justify the about text
