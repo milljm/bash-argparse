@@ -26,7 +26,7 @@ function print_arrays()
     local _indent=$(printf "%.s " {1..100})
 
     # Discover longest argument
-    for argument in ${_args_array[@]}; do
+    for argument in "${_args_array[@]}"; do
         if [ ${#argument} -gt ${#_longest_found} ]; then
             _longest_found="${argument}${tab}"
         fi
@@ -40,7 +40,7 @@ function print_arrays()
     done
 
     index=0
-    for message in "${_args_array[@]}"; do
+    for message in "${_msgs_array[@]}"; do
         message_length=${#_msgs_array[$index]}
 
         # About string longer than max_length
@@ -80,10 +80,10 @@ function print_arrays()
             remainder_message="${_msgs_array[$index]}"
 
             # Print beautified message string
-            echo -e "${tab}${message}${justified_message}${remainder_message}\n"
+            echo -e "${tab}${_args_array[$index]}${justified_message}${remainder_message}\n"
         else
             # Print as-is, no formatting was required
-            echo -e "${tab}${message}${_msgs_array[$index]}"
+            echo -e "${tab}${_args_array[$index]}${_msgs_array[$index]}"
         fi
         let index=$index+1
     done
@@ -96,7 +96,7 @@ function print_help()
           "-f|--foo"\
           "-b|--bar"\
           "-l|--long-named-option"\
-          "-s|--short"\
+          "-s|--short [TYPE]"\
           "-r|--resume"\
           "-s|--short")
 
